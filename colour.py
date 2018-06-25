@@ -10,7 +10,7 @@ from PIL import Image
 import random
 import numpy
 
-
+#creating a cluster of similar pixels - unsupervised learning because data does not have prescribed labels nor class values
 class Cluster(object):
 
     def __init__(self):
@@ -35,9 +35,9 @@ class Cluster(object):
 
         return self.centroid
 
-
+#running a kmeans algorithm on the clusters in order to assign centroids and then move centroids to the average center of each cluster
 class Kmeans(object):
-
+    #initialize 3 cluster groups with a size of 200 pixels
     def __init__(self, k=3, max_iterations=5, min_distance=5.0, size=200):
         self.k = k
         self.max_iterations = max_iterations
@@ -46,26 +46,31 @@ class Kmeans(object):
 
     def run(self, image):
         self.image = image
+        #creating a 200x200 thumbnail image
         self.image.thumbnail(self.size)
+        #creates an array of pixel values with a data type of unsigned integers (0 to 255)
         self.pixels = numpy.array(image.getdata(), dtype=numpy.uint8)
-
+        #creating an empty list of only three cluster holders
         self.clusters = [None for i in range(self.k)]
         self.oldClusters = None
 
+        #returns a k (3) length list of unique elements chosen from the pixels array.
         randomPixels = random.sample(self.pixels, self.k)
 
+        #assigning center of cluster to random 3 pixels we just chose
         for idx in range(self.k):
             self.clusters[idx] = Cluster()
             self.clusters[idx].centroid = randomPixels[idx]
 
         iterations = 0
 
+        #while iterations is less or equal to 5 continue checking distances
         while self.shouldExit(iterations) is False:
-
+            #put cluster centroids in an array called old clusters
             self.oldClusters = [cluster.centroid for cluster in self.clusters]
 
             print iterations
-
+            #assign pixels a clusters based on their distance
             for pixel in self.pixels:
                 self.assignClusters(pixel)
 
@@ -77,15 +82,18 @@ class Kmeans(object):
         return [cluster.centroid for cluster in self.clusters]
 
     def assignClusters(self, pixel):
+        #infinite float value - This is useful for finding lowest values for something. for example, calculating path route costs when traversing treesself.
+        #Ex: Finding the "cheapest" path in a list of options
         shortest = float('Inf')
         for cluster in self.clusters:
             distance = self.calcDistance(cluster.centroid, pixel)
             if distance < shortest:
                 shortest = distance
                 nearest = cluster
-
+        #add that pixel to the nearest cluster
         nearest.addPoint(pixel)
 
+    #calculating distance hypotenuse
     def calcDistance(self, a, b):
 
         result = numpy.sqrt(sum((a - b) ** 2))
@@ -96,6 +104,7 @@ class Kmeans(object):
         if self.oldClusters is None:
             return False
 
+        #calculate the distance between new cluster center and old cluster center
         for idx in range(self.k):
             dist = self.calcDistance(
                 numpy.array(self.clusters[idx].centroid),
@@ -145,7 +154,7 @@ class Kmeans(object):
 
 def main():
 
-    image = Image.open("images/kitty.png")
+    image = Image.open("images/workday_web.jpg")
 
     k = Kmeans()
 
